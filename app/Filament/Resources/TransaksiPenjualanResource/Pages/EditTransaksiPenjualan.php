@@ -13,8 +13,21 @@ class EditTransaksiPenjualan extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->before(function () {
+                    // Kembalikan stok hanya jika transaksi sudah dibayar
+                    if ($this->record->status === 'sudah_bayar') {
+                        foreach ($this->record->detailPenjualan as $detail) {
+                            $detail->produk->increment('stok', $detail->jumlah);
+                        }
+                    }
+                }),
         ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 
     protected function afterSave(): void

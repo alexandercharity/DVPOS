@@ -21,13 +21,13 @@ class CreateTransaksiPenjualan extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // Hitung total dari detail yang sudah tersimpan
+        // Hitung total saja, stok belum dikurangi
         $total = $this->record->detailPenjualan()->sum('subtotal');
         $this->record->updateQuietly(['total' => $total]);
+    }
 
-        // Kurangi stok
-        foreach ($this->record->detailPenjualan as $detail) {
-            $detail->produk->decrement('stok', $detail->jumlah);
-        }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

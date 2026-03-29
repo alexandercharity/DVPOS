@@ -22,9 +22,13 @@ class CreatePembelian extends CreateRecord
         $total = $this->record->detailPembelian()->sum('subtotal');
         $this->record->updateQuietly(['total' => $total]);
 
-        // Tambah stok
         foreach ($this->record->detailPembelian as $detail) {
             $detail->produk->increment('stok', $detail->jumlah);
         }
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

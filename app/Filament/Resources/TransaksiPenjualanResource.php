@@ -108,11 +108,28 @@ class TransaksiPenjualanResource extends Resource
                 ])
                 ->action(function ($record, array $data) {
                     $bayar = floatval($data['bayar']);
+                    if ($bayar < $record->total) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Uang Kurang!')
+                            ->body('Uang yang diberikan kurang. Segera cek kembali. Total: Rp ' . number_format($record->total, 0, ',', '.') . ', Bayar: Rp ' . number_format($bayar, 0, ',', '.'))
+                            ->danger()
+                            ->send();
+                        return;
+                    }
                     $record->update([
                         'bayar' => $bayar,
-                        'kembalian' => max(0, $bayar - $record->total),
+                        'kembalian' => $bayar - $record->total,
                         'status' => 'sudah_bayar',
                     ]);
+                    // Kurangi stok setelah pembayaran dikonfirmasi
+                    foreach ($record->detailPenjualan as $detail) {
+                        $detail->produk->decrement('stok', $detail->jumlah);
+                    }
+                    \Filament\Notifications\Notification::make()
+                        ->title('Pembayaran Berhasil!')
+                        ->body('Kembalian: Rp ' . number_format($bayar - $record->total, 0, ',', '.'))
+                        ->success()
+                        ->send();
                 }),
         ]);
     }

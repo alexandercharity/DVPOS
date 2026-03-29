@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Produk;
+use Filament\Widgets\Widget;
+
+class StokRendahWidget extends Widget
+{
+    protected static string $view = 'filament.widgets.stok-rendah-widget';
+    protected static ?int $sort = 3;
+    protected int|string|array $columnSpan = 'full';
+
+    public static function canView(): bool
+    {
+        return auth()->user()->isPemilik();
+    }
+
+    public function getStokRendah()
+    {
+        return Produk::where('stok', '<=', 5)->orderBy('stok')->get();
+    }
+}
