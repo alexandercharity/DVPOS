@@ -22,8 +22,9 @@ class CreatePembelian extends CreateRecord
         $total = $this->record->detailPembelian()->sum('subtotal');
         $this->record->updateQuietly(['total' => $total]);
 
+        // Tambah stok bahan baku
         foreach ($this->record->detailPembelian as $detail) {
-            $detail->produk->increment('stok', $detail->jumlah);
+            $detail->bahanBaku->increment('stok', $detail->jumlah);
         }
     }
 

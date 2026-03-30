@@ -55,12 +55,30 @@ class TransaksiPenjualanResource extends Resource
                         }),
                     TextInput::make('jumlah')->numeric()->required()->default(1)
                         ->live(onBlur: true)
+                        ->rules(fn (Get $get) => [
+                            'required',
+                            'numeric',
+                            'min:1',
+                            function ($attribute, $value, $fail) use ($get) {
+                                $produk = \App\Models\Produk::find($get('produk_id'));
+                                if ($produk && $value > $produk->stok) {
+                                    $fail("Stok tidak cukup. Stok tersedia: {$produk->stok}");
+                                }
+                            },
+                        ])
                         ->afterStateUpdated(function (Get $get, Set $set) {
                             $set('subtotal', floatval($get('jumlah')) * floatval($get('harga_jual')));
                         }),
                     TextInput::make('harga_jual')->numeric()->prefix('Rp')->readOnly(),
                     TextInput::make('subtotal')->numeric()->prefix('Rp')->readOnly(),
-                ])->columns(4)->label('Item Pesanan')->addActionLabel('Tambah Item')->columnSpanFull(),
+                ])->columns(4)->label('Item Pesanan')->addActionLabel('+ Tambah Item')->columnSpanFull()
+                ->grid(1)
+                ->itemLabel(fn (array $state): ?string => 
+                    $state['produk_id'] 
+                        ? (Produk::find($state['produk_id'])?->nama ?? 'Item') . ' x' . ($state['jumlah'] ?? 1) . ' = Rp ' . number_format(floatval($state['subtotal'] ?? 0), 0, ',', '.')
+                        : null
+                )
+                ->collapsed(fn (array $state): bool => !empty($state['produk_id'])),
             Placeholder::make('total_label')
                 ->label('Total Pembayaran')
                 ->content(function (Get $get) {

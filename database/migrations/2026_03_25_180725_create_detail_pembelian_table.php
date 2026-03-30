@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('detail_pembelian', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pembelian_id')->constrained('pembelian')->onDelete('cascade');
-            $table->foreignId('produk_id')->constrained('produk')->onDelete('cascade');
+            $table->foreignId('bahan_baku_id')->constrained('bahan_baku')->onDelete('cascade');
             $table->integer('jumlah');
             $table->decimal('harga_beli', 10, 2);
             $table->decimal('subtotal', 12, 2);

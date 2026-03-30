@@ -3,8 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PembelianResource\Pages;
+use App\Models\BahanBaku;
 use App\Models\Pembelian;
-use App\Models\Produk;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -44,31 +44,30 @@ class PembelianResource extends Resource
             Repeater::make('detailPembelian')
                 ->relationship()
                 ->schema([
-                    Select::make('produk_id')
-                        ->label('Produk')
-                        ->options(Produk::all()->pluck('nama', 'id'))
+                    Select::make('bahan_baku_id')
+                        ->label('Bahan Baku')
+                        ->options(BahanBaku::all()->pluck('nama', 'id'))
                         ->required()
-                        ->reactive()
+                        ->live()
                         ->afterStateUpdated(function ($state, Set $set) {
-                            $produk = Produk::find($state);
-                            if ($produk) {
-                                $set('harga_beli', $produk->harga);
-                            }
+                            // reset harga saat ganti bahan baku
+                            $set('harga_beli', null);
+                            $set('subtotal', null);
                         }),
                     TextInput::make('jumlah')->numeric()->required()->default(1)
-                        ->reactive()
+                        ->live(onBlur: true)
                         ->afterStateUpdated(function (Get $get, Set $set) {
-                            $set('subtotal', $get('jumlah') * $get('harga_beli'));
+                            $set('subtotal', floatval($get('jumlah')) * floatval($get('harga_beli')));
                         }),
                     TextInput::make('harga_beli')->numeric()->prefix('Rp')->required()
-                        ->reactive()
+                        ->live(onBlur: true)
                         ->afterStateUpdated(function (Get $get, Set $set) {
-                            $set('subtotal', $get('jumlah') * $get('harga_beli'));
+                            $set('subtotal', floatval($get('jumlah')) * floatval($get('harga_beli')));
                         }),
                     TextInput::make('subtotal')->numeric()->prefix('Rp')->readOnly(),
                 ])->columns(4)
                 ->label('Detail Pembelian')
-                ->addActionLabel('Tambah Produk'),
+                ->addActionLabel('Tambah Bahan Baku'),
             Placeholder::make('total_label')
                 ->label('Total Pembelian')
                 ->content(function (Get $get) {
