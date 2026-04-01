@@ -12,6 +12,7 @@
                             <th class="py-2 text-left">Bahan Baku</th>
                             <th class="py-2 text-left">Satuan</th>
                             <th class="py-2 text-center">Stok</th>
+                            <th class="py-2 text-center">Min. Stok</th>
                             <th class="py-2 text-left">Status</th>
                         </tr>
                     </thead>
@@ -21,8 +22,9 @@
                             <td class="py-2 font-medium">{{ $item->nama }}</td>
                             <td class="py-2 text-gray-500">{{ $item->satuan }}</td>
                             <td class="py-2 text-center font-bold {{ $item->stok == 0 ? 'text-red-500' : 'text-yellow-500' }}">
-                                {{ $item->stok }}
+                                {{ $item->stok + 0 }}
                             </td>
+                            <td class="py-2 text-gray-500 text-center">{{ $item->stok_minimum + 0 }}</td>
                             <td class="py-2">
                                 <span style="{{ $item->stok == 0 ? 'background:#ef4444;color:white;' : 'background:#facc15;color:#1f2937;' }} padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;">
                                     {{ $item->stok == 0 ? 'Habis' : 'Hampir Habis' }}

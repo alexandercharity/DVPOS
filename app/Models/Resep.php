@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Resep extends Model
 {
     protected $table = 'resep';
-    protected $fillable = ['produk_id', 'bahan_baku_id', 'jumlah'];
+    protected $fillable = ['produk_id', 'bahan_baku_id', 'jumlah', 'satuan'];
+
+    protected $casts = ['jumlah' => 'float'];
 
     public function produk()
     {

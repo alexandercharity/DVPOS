@@ -4,12 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BahanBakuResource\Pages;
 use App\Models\BahanBaku;
+use App\Models\KategoriBahanBaku;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class BahanBakuResource extends Resource
@@ -30,19 +32,32 @@ class BahanBakuResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+            Select::make('kategori_bahan_baku_id')
+                ->label('Kategori')
+                ->options(KategoriBahanBaku::all()->pluck('nama', 'id'))
+                ->searchable()
+                ->nullable()
+                ->createOptionForm([
+                    TextInput::make('nama')->required()->maxLength(255),
+                ])
+                ->createOptionUsing(fn (array $data) => KategoriBahanBaku::create($data)->id),
             TextInput::make('nama')->required()->maxLength(255),
             Select::make('satuan')
                 ->options([
-                    'pcs' => 'Pcs',
-                    'kg' => 'Kg',
                     'gram' => 'Gram',
-                    'liter' => 'Liter',
                     'ml' => 'Ml',
+                    'kg' => 'Kg',
+                    'liter' => 'Liter',
+                    'pcs' => 'Pcs',
                     'ikat' => 'Ikat',
                     'butir' => 'Butir',
                     'bungkus' => 'Bungkus',
-                ])->required()->default('pcs'),
-            TextInput::make('stok')->numeric()->default(0)->required(),
+                ])->required()->default('gram'),
+            TextInput::make('stok')->numeric()->default(0)->required()
+                ->step(0.001)->label('Stok Awal'),
+            TextInput::make('stok_minimum')->numeric()->default(10)->required()
+                ->step(0.001)->label('Stok Minimum (Notif)')
+                ->helperText('Notif muncul kalau stok di bawah angka ini'),
             Textarea::make('keterangan')->rows(2)->nullable(),
         ]);
     }
@@ -50,13 +65,22 @@ class BahanBakuResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('id')->sortable(),
+            TextColumn::make('kategoriBahanBaku.nama')->label('Kategori')->sortable()->badge()->color('info'),
             TextColumn::make('nama')->searchable()->sortable(),
             TextColumn::make('satuan'),
             TextColumn::make('stok')->sortable()
-                ->color(fn ($state) => $state <= 5 ? 'danger' : 'success'),
+                ->formatStateUsing(fn ($state, $record) => ($state + 0) . ' ' . $record->satuan)
+                ->color(fn ($state, $record) => $state <= $record->stok_minimum ? 'danger' : 'success'),
+            TextColumn::make('stok_minimum')->label('Min. Stok')
+                ->formatStateUsing(fn ($state, $record) => ($state + 0) . ' ' . $record->satuan),
             TextColumn::make('keterangan')->limit(40),
-        ])->defaultSort('id', 'desc');
+        ])
+        ->defaultSort('kategori_bahan_baku_id')
+        ->filters([
+            SelectFilter::make('kategori_bahan_baku_id')
+                ->label('Kategori')
+                ->options(KategoriBahanBaku::all()->pluck('nama', 'id')),
+        ]);
     }
 
     public static function getPages(): array

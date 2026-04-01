@@ -18,6 +18,6 @@ class StokRendahWidget extends Widget
 
     public function getStokRendah()
     {
-        return BahanBaku::where('stok', '<=', 5)->orderBy('stok')->get();
+        return BahanBaku::whereRaw('stok <= stok_minimum')->orderBy('stok')->get();
     }
 }
