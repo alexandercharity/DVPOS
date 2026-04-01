@@ -4,17 +4,10 @@ namespace App\Filament\Pages;
 
 use App\Models\Pembelian;
 use App\Models\TransaksiPenjualan;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
-use Illuminate\Support\Carbon;
 
-class LaporanPage extends Page implements HasForms
+class LaporanPage extends Page
 {
-    use InteractsWithForms;
-
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
     protected static ?string $navigationLabel = 'Laporan';
     protected static ?string $title = 'Laporan Penjualan & Pembelian';
@@ -23,11 +16,11 @@ class LaporanPage extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return true; // kasir & pemilik bisa akses
+        return true;
     }
 
-    public ?string $tanggal_mulai = null;
-    public ?string $tanggal_selesai = null;
+    public string $tanggal_mulai = '';
+    public string $tanggal_selesai = '';
 
     public function mount(): void
     {
@@ -35,39 +28,37 @@ class LaporanPage extends Page implements HasForms
         $this->tanggal_selesai = now()->format('Y-m-d');
     }
 
-    public function form(Form $form): Form
-    {
-        return $form->schema([
-            DatePicker::make('tanggal_mulai')->label('Dari Tanggal')->required(),
-            DatePicker::make('tanggal_selesai')->label('Sampai Tanggal')->required(),
-        ])->columns(2);
-    }
-
     public function getPenjualan()
     {
-        return TransaksiPenjualan::with(['user', 'detailPenjualan.produk'])
-            ->whereBetween('tanggal', [$this->tanggal_mulai, $this->tanggal_selesai])
+        return TransaksiPenjualan::with(['user'])
+            ->whereDate('tanggal', '>=', $this->tanggal_mulai)
+            ->whereDate('tanggal', '<=', $this->tanggal_selesai)
             ->orderBy('tanggal', 'desc')
             ->get();
     }
 
     public function getPembelian()
     {
-        return Pembelian::with(['supplier', 'detailPembelian.produk'])
-            ->whereBetween('tanggal', [$this->tanggal_mulai, $this->tanggal_selesai])
+        return Pembelian::with(['supplier'])
+            ->whereDate('tanggal', '>=', $this->tanggal_mulai)
+            ->whereDate('tanggal', '<=', $this->tanggal_selesai)
             ->orderBy('tanggal', 'desc')
             ->get();
     }
 
-    public function getTotalPenjualan()
+    public function getTotalPenjualan(): float
     {
-        if (auth()->user()->isKasir()) return null;
-        return TransaksiPenjualan::whereBetween('tanggal', [$this->tanggal_mulai, $this->tanggal_selesai])->sum('total');
+        if (auth()->user()->isKasir()) return 0;
+        return (float) TransaksiPenjualan::whereDate('tanggal', '>=', $this->tanggal_mulai)
+            ->whereDate('tanggal', '<=', $this->tanggal_selesai)
+            ->sum('total');
     }
 
-    public function getTotalPembelian()
+    public function getTotalPembelian(): float
     {
-        if (auth()->user()->isKasir()) return null;
-        return Pembelian::whereBetween('tanggal', [$this->tanggal_mulai, $this->tanggal_selesai])->sum('total');
+        if (auth()->user()->isKasir()) return 0;
+        return (float) Pembelian::whereDate('tanggal', '>=', $this->tanggal_mulai)
+            ->whereDate('tanggal', '<=', $this->tanggal_selesai)
+            ->sum('total');
     }
 }

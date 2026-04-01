@@ -8,18 +8,17 @@ class TransaksiPenjualanObserver
 {
     public function created(TransaksiPenjualan $transaksi): void
     {
-        // Hitung total dan kurangi stok
-        $total = 0;
-        foreach ($transaksi->detailPenjualan as $detail) {
-            $total += $detail->subtotal;
-            $detail->produk->decrement('stok', $detail->jumlah);
-        }
+        // Hanya hitung total, stok dikurangi saat konfirmasi bayar
+        $total = $transaksi->detailPenjualan->sum('subtotal');
         $transaksi->updateQuietly(['total' => $total]);
     }
 
     public function updated(TransaksiPenjualan $transaksi): void
     {
-        $total = $transaksi->detailPenjualan->sum('subtotal');
-        $transaksi->updateQuietly(['total' => $total]);
+        // Recalculate total saat ada perubahan
+        if (!$transaksi->isDirty(['total', 'bayar', 'kembalian', 'status'])) {
+            $total = $transaksi->detailPenjualan->sum('subtotal');
+            $transaksi->updateQuietly(['total' => $total]);
+        }
     }
 }

@@ -106,15 +106,20 @@ class KasirPage extends Page
             return;
         }
 
-        $transaksi = TransaksiPenjualan::create([
-            'user_id' => auth()->id(),
-            'kode_transaksi' => 'TRX-' . strtoupper(uniqid()),
-            'tanggal' => now(),
-            'total' => $this->getTotal(),
-            'status' => 'belum_bayar',
-            'bayar' => 0,
-            'kembalian' => 0,
-        ]);
+        $total = $this->getTotal();
+
+        // Buat transaksi tanpa trigger observer recalculate (detail belum ada)
+        $transaksi = TransaksiPenjualan::withoutEvents(function () use ($total) {
+            return TransaksiPenjualan::create([
+                'user_id' => auth()->id(),
+                'kode_transaksi' => 'TRX-' . strtoupper(uniqid()),
+                'tanggal' => now(),
+                'total' => $total,
+                'status' => 'belum_bayar',
+                'bayar' => 0,
+                'kembalian' => 0,
+            ]);
+        });
 
         foreach ($this->cart as $item) {
             DetailPenjualan::create([
@@ -130,7 +135,7 @@ class KasirPage extends Page
 
         Notification::make()
             ->title('Pesanan tersimpan!')
-            ->body('Kode: ' . $transaksi->kode_transaksi . ' | Total: Rp ' . number_format($transaksi->total, 0, ',', '.'))
+            ->body('Kode: ' . $transaksi->kode_transaksi . ' | Total: Rp ' . number_format($total, 0, ',', '.'))
             ->success()
             ->send();
     }

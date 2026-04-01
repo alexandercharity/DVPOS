@@ -13,4 +13,9 @@ class BahanBaku extends Model
     {
         return $this->hasMany(DetailPembelian::class);
     }
+
+    public function resep()
+    {
+        return $this->hasMany(Resep::class);
+    }
 }

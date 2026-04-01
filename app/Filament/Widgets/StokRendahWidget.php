@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Produk;
+use App\Models\BahanBaku;
 use Filament\Widgets\Widget;
 
 class StokRendahWidget extends Widget
@@ -18,6 +18,6 @@ class StokRendahWidget extends Widget
 
     public function getStokRendah()
     {
-        return Produk::where('stok', '<=', 5)->orderBy('stok')->get();
+        return BahanBaku::where('stok', '<=', 5)->orderBy('stok')->get();
     }
 }

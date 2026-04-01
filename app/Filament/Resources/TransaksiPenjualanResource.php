@@ -24,6 +24,8 @@ class TransaksiPenjualanResource extends Resource
     protected static ?string $model = TransaksiPenjualan::class;
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Transaksi Penjualan';
+    protected static ?string $modelLabel = 'Transaksi Penjualan';
+    protected static ?string $pluralModelLabel = 'Transaksi Penjualan';
     protected static ?string $navigationGroup = 'Transaksi';
     protected static ?int $navigationSort = 1;
 
@@ -134,14 +136,20 @@ class TransaksiPenjualanResource extends Resource
                             ->send();
                         return;
                     }
-                    $record->update([
+                    // Kurangi stok saat pembayaran dikonfirmasi
+                    foreach ($record->detailPenjualan as $detail) {
+                        $detail->produk->decrement('stok', $detail->jumlah);
+                    }
+                    $record->updateQuietly([
                         'bayar' => $bayar,
                         'kembalian' => $bayar - $record->total,
                         'status' => 'sudah_bayar',
                     ]);
-                    // Kurangi stok setelah pembayaran dikonfirmasi
+                    // Kurangi stok bahan baku sesuai resep
                     foreach ($record->detailPenjualan as $detail) {
-                        $detail->produk->decrement('stok', $detail->jumlah);
+                        foreach ($detail->produk->resep as $resep) {
+                            $resep->bahanBaku->decrement('stok', $resep->jumlah * $detail->jumlah);
+                        }
                     }
                     \Filament\Notifications\Notification::make()
                         ->title('Pembayaran Berhasil!')

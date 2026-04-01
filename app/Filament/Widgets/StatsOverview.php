@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\BahanBaku;
 use App\Models\Produk;
 use App\Models\TransaksiPenjualan;
 use App\Models\Pembelian;
@@ -18,7 +19,7 @@ class StatsOverview extends BaseWidget
     {
         $totalPenjualanHari = TransaksiPenjualan::whereDate('tanggal', today())->sum('total');
         $totalPenjualanBulan = TransaksiPenjualan::whereMonth('tanggal', now()->month)->sum('total');
-        $stokRendah = Produk::where('stok', '<=', 5)->count();
+        $stokRendah = BahanBaku::where('stok', '<=', 5)->count();
 
         $stats = [
             Stat::make('Penjualan Hari Ini', 'Rp ' . number_format($totalPenjualanHari, 0, ',', '.'))
