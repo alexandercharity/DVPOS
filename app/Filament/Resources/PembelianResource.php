@@ -52,11 +52,17 @@ class PembelianResource extends Resource
                         ->required()
                         ->live()
                         ->afterStateUpdated(function ($state, Set $set) {
-                            // reset harga saat ganti bahan baku
                             $set('harga_beli', null);
                             $set('subtotal', null);
+                            $set('satuan', BahanBaku::find($state)?->satuan ?? '');
                         }),
-                    TextInput::make('jumlah')->numeric()->required()->default(1)
+                    TextInput::make('jumlah')
+                        ->numeric()
+                        ->required()
+                        ->default(1)
+                        ->inputMode('decimal')
+                        ->step(0.001)
+                        ->suffix(fn (Get $get) => BahanBaku::find($get('bahan_baku_id'))?->satuan ?? '')
                         ->live(onBlur: true)
                         ->afterStateUpdated(function (Get $get, Set $set) {
                             $set('subtotal', floatval($get('jumlah')) * floatval($get('harga_beli')));

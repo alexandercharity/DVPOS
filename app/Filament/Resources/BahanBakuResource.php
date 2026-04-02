@@ -53,8 +53,12 @@ class BahanBakuResource extends Resource
                     'butir' => 'Butir',
                     'bungkus' => 'Bungkus',
                 ])->required()->default('gram'),
-            TextInput::make('stok')->numeric()->default(0)->required()
-                ->step(0.001)->label('Stok Awal'),
+            TextInput::make('stok')
+                ->numeric()
+                ->default(0)
+                ->readOnly()
+                ->label('Stok')
+                ->helperText('Stok otomatis bertambah saat ada pembelian bahan baku'),
             TextInput::make('stok_minimum')->numeric()->default(10)->required()
                 ->step(0.001)->label('Stok Minimum (Notif)')
                 ->helperText('Notif muncul kalau stok di bawah angka ini'),

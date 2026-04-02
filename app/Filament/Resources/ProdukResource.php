@@ -71,8 +71,17 @@ class ProdukResource extends Resource
             TextColumn::make('nama')->searchable()->sortable(),
             TextColumn::make('kategori.nama')->label('Kategori')->sortable(),
             TextColumn::make('harga')->money('IDR')->sortable(),
-            TextColumn::make('stok')->sortable()
-                ->color(fn ($state) => $state <= 5 ? 'danger' : 'success'),
+            TextColumn::make('estimasi_porsi')
+                ->label('Est. Porsi')
+                ->getStateUsing(fn ($record) => $record->estimasi_porsi)
+                ->formatStateUsing(fn ($state) => $state === null ? '-' : $state . ' porsi')
+                ->color(fn ($state) => match(true) {
+                    $state === null => 'gray',
+                    $state == 0 => 'danger',
+                    $state <= 5 => 'warning',
+                    default => 'success',
+                })
+                ->tooltip('Estimasi porsi berdasarkan stok bahan baku'),
             IconColumn::make('tersedia')->boolean()->label('Tersedia'),
         ])->defaultSort('id', 'desc')
         ->actions([

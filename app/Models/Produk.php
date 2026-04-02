@@ -28,4 +28,22 @@ class Produk extends Model
     {
         return $this->hasMany(Resep::class);
     }
+
+    // Hitung estimasi porsi yang bisa dibuat dari stok bahan baku
+    public function getEstimasiPorsiAttribute(): ?int
+    {
+        $resep = $this->resep()->with('bahanBaku')->get();
+        if ($resep->isEmpty()) return null;
+
+        $minPorsi = PHP_INT_MAX;
+        foreach ($resep as $r) {
+            if (!$r->bahanBaku || $r->jumlah <= 0) continue;
+            $stokBase = \App\Observers\BahanBakuObserver::convertToBase($r->bahanBaku->stok, $r->bahanBaku->satuan);
+            $kebutuhanBase = \App\Observers\BahanBakuObserver::convertToBase($r->jumlah, $r->satuan);
+            $porsi = $kebutuhanBase > 0 ? floor($stokBase / $kebutuhanBase) : 0;
+            if ($porsi < $minPorsi) $minPorsi = $porsi;
+        }
+
+        return $minPorsi === PHP_INT_MAX ? 0 : (int) $minPorsi;
+    }
 }

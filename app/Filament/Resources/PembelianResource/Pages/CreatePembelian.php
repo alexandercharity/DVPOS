@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PembelianResource\Pages;
 
 use App\Filament\Resources\PembelianResource;
+use App\Models\DetailPembelian;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreatePembelian extends CreateRecord
@@ -19,13 +20,25 @@ class CreatePembelian extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $total = $this->record->detailPembelian()->sum('subtotal');
-        $this->record->updateQuietly(['total' => $total]);
+        // Jalankan setelah semua tersimpan via dispatch ke end of request
+        $pembelianId = $this->record->id;
 
-        // Tambah stok bahan baku
-        foreach ($this->record->detailPembelian as $detail) {
-            $detail->bahanBaku->increment('stok', $detail->jumlah);
-        }
+        app()->terminating(function () use ($pembelianId) {
+            $details = DetailPembelian::with('bahanBaku')
+                ->where('pembelian_id', $pembelianId)
+                ->get();
+
+            $total = $details->sum('subtotal');
+
+            \App\Models\Pembelian::where('id', $pembelianId)
+                ->update(['total' => $total]);
+
+            foreach ($details as $detail) {
+                if ($detail->bahanBaku) {
+                    $detail->bahanBaku->increment('stok', $detail->jumlah);
+                }
+            }
+        });
     }
 
     protected function getRedirectUrl(): string
