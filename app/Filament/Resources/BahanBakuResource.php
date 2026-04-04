@@ -57,10 +57,16 @@ class BahanBakuResource extends Resource
                 ->numeric()
                 ->default(0)
                 ->readOnly()
+                ->step(0.001)
+                ->inputMode('decimal')
+                ->formatStateUsing(fn ($state) => rtrim(rtrim(number_format((float)$state, 3, '.', ''), '0'), '.'))
                 ->label('Stok')
                 ->helperText('Stok otomatis bertambah saat ada pembelian bahan baku'),
             TextInput::make('stok_minimum')->numeric()->default(10)->required()
-                ->step(0.001)->label('Stok Minimum (Notif)')
+                ->step(0.001)
+                ->inputMode('decimal')
+                ->formatStateUsing(fn ($state) => rtrim(rtrim(number_format((float)$state, 3, '.', ''), '0'), '.'))
+                ->label('Stok Minimum (Notif)')
                 ->helperText('Notif muncul kalau stok di bawah angka ini'),
             Textarea::make('keterangan')->rows(2)->nullable(),
         ]);
@@ -73,10 +79,10 @@ class BahanBakuResource extends Resource
             TextColumn::make('nama')->searchable()->sortable(),
             TextColumn::make('satuan'),
             TextColumn::make('stok')->sortable()
-                ->formatStateUsing(fn ($state, $record) => ($state + 0) . ' ' . $record->satuan)
+                ->formatStateUsing(fn ($state, $record) => rtrim(rtrim(number_format((float)$state, 3, '.', ''), '0'), '.') . ' ' . $record->satuan)
                 ->color(fn ($state, $record) => $state <= $record->stok_minimum ? 'danger' : 'success'),
             TextColumn::make('stok_minimum')->label('Min. Stok')
-                ->formatStateUsing(fn ($state, $record) => ($state + 0) . ' ' . $record->satuan),
+                ->formatStateUsing(fn ($state, $record) => rtrim(rtrim(number_format((float)$state, 3, '.', ''), '0'), '.') . ' ' . $record->satuan),
             TextColumn::make('keterangan')->limit(40),
         ])
         ->defaultSort('kategori_bahan_baku_id')
