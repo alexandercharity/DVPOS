@@ -145,10 +145,19 @@ class TransaksiPenjualanResource extends Resource
                         'kembalian' => $bayar - $record->total,
                         'status' => 'sudah_bayar',
                     ]);
-                    // Kurangi stok bahan baku sesuai resep
+                    // Kurangi stok bahan baku sesuai resep (dengan konversi satuan)
                     foreach ($record->detailPenjualan as $detail) {
                         foreach ($detail->produk->resep as $resep) {
-                            $resep->bahanBaku->decrement('stok', $resep->jumlah * $detail->jumlah);
+                            $kebutuhanBase = \App\Observers\BahanBakuObserver::convertToBase(
+                                $resep->jumlah * $detail->jumlah,
+                                $resep->satuan
+                            );
+                            $stokBase = \App\Observers\BahanBakuObserver::convertToBase(
+                                1,
+                                $resep->bahanBaku->satuan
+                            );
+                            $pengurangan = $kebutuhanBase / $stokBase;
+                            $resep->bahanBaku->decrement('stok', $pengurangan);
                         }
                     }
                     \Filament\Notifications\Notification::make()
