@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-<div class="flex gap-4 h-[80vh]">
+<div class="flex gap-4" style="height:calc(100vh - 120px)">
 
     {{-- KIRI: Menu --}}
     <div class="flex-1 flex flex-col gap-3 overflow-hidden">
@@ -23,31 +23,33 @@
         </div>
 
         {{-- Grid produk --}}
-        <div class="grid grid-cols-3 gap-3 overflow-y-auto pr-1">
+        <div class="overflow-y-auto pr-1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;align-content:start;">
             @forelse($this->getProduks() as $produk)
             <button wire:click="addToCart({{ $produk->id }})"
-                class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-left hover:border-amber-400 hover:shadow-md transition">
+                class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 text-center hover:border-amber-400 hover:shadow-lg transition flex flex-col items-center gap-2">
+                {{-- Gambar bulat --}}
                 @if($produk->gambar)
-                <img src="{{ Storage::url($produk->gambar) }}" class="w-full h-24 object-cover rounded-lg mb-2" />
+                <img src="{{ Storage::url($produk->gambar) }}" class="w-24 h-24 object-cover rounded-full border-2 border-gray-100 dark:border-gray-600" />
                 @else
-                <div class="w-full h-24 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2 flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                <div class="w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-xs border-2 border-gray-200 dark:border-gray-600">No Image</div>
                 @endif
-                <p class="font-semibold text-sm truncate">{{ $produk->nama }}</p>
-                <p class="text-amber-500 text-sm font-bold">Rp {{ number_format($produk->harga, 0, ',', '.') }}</p>
+                {{-- Info --}}
+                <p class="font-semibold text-sm text-center leading-tight">{{ $produk->nama }}</p>
+                <p class="text-amber-500 font-bold text-sm">Rp {{ number_format($produk->harga, 0, ',', '.') }}</p>
                 <p class="text-xs text-gray-400">Stok: {{ $produk->stok }}</p>
             </button>
             @empty
-            <div class="col-span-3 text-center text-gray-400 py-8">Tidak ada produk tersedia</div>
+            <div class="col-span-4 text-center text-gray-400 py-8">Tidak ada produk tersedia</div>
             @endforelse
         </div>
     </div>
 
     {{-- KANAN: Order --}}
-    <div class="w-80 flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+    <div class="w-72 flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4" style="height:fit-content; max-height:100%; overflow-y:auto; position:sticky; top:0;">
         <h2 class="font-bold text-lg mb-3">Order</h2>
 
         {{-- Cart items --}}
-        <div class="flex-1 overflow-y-auto space-y-2">
+        <div class="space-y-2 mb-3">
             @forelse($cart as $produkId => $item)
             <div class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="flex-1 min-w-0">
@@ -64,12 +66,12 @@
                 <p class="text-xs font-semibold w-16 text-right">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</p>
             </div>
             @empty
-            <div class="text-center text-gray-400 text-sm py-8">Belum ada pesanan</div>
+            <div class="text-center text-gray-400 text-sm py-4">Belum ada pesanan</div>
             @endforelse
         </div>
 
         {{-- Total & actions --}}
-        <div class="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3 space-y-3">
+        <div class="border-t border-gray-200 dark:border-gray-600 pt-3 space-y-2">
             <div class="flex justify-between font-bold text-lg">
                 <span>Total</span>
                 <span class="text-amber-500">Rp {{ number_format($this->getTotal(), 0, ',', '.') }}</span>
