@@ -75,11 +75,13 @@
                 <span class="text-amber-500">Rp {{ number_format($this->getTotal(), 0, ',', '.') }}</span>
             </div>
             <button wire:click="simpanTransaksi"
-                class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold text-sm">
+                style="background-color:#f59e0b;color:#ffffff;"
+                class="w-full py-2 hover:opacity-90 font-semibold text-sm rounded-lg">
                 Simpan Pesanan
             </button>
             <button wire:click="clearCart"
-                class="w-full py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-300 rounded-lg text-sm">
+                style="color:#374151;"
+                class="w-full py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 dark:!text-white rounded-lg text-sm font-medium">
                 Batal
             </button>
         </div>

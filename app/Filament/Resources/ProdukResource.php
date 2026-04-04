@@ -10,6 +10,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -55,7 +56,17 @@ class ProdukResource extends Resource
                 ->required()
                 ->label('Kategori'),
             TextInput::make('nama')->required()->maxLength(255),
-            TextInput::make('harga')->numeric()->prefix('Rp')->required(),
+            TextInput::make('harga')
+                ->prefix('Rp')
+                ->required()
+                ->placeholder('Contoh: 15.000')
+                ->dehydrateStateUsing(fn ($state) => (float) str_replace('.', '', $state ?? ''))
+                ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 0, ',', '.') : '')
+                ->live(onBlur: true)
+                ->afterStateUpdated(function ($state, Set $set) {
+                    $clean = (float) str_replace('.', '', $state ?? '');
+                    $set('harga', $clean > 0 ? number_format($clean, 0, ',', '.') : '');
+                }),
             TextInput::make('stok')->numeric()->default(0)->required(),
             Toggle::make('tersedia')->label('Tersedia')->default(true)->inline(false),
             Textarea::make('deskripsi')->rows(3),

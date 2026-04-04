@@ -65,14 +65,24 @@ class PembelianResource extends Resource
                         ->suffix(fn (Get $get) => BahanBaku::find($get('bahan_baku_id'))?->satuan ?? '')
                         ->live(onBlur: true)
                         ->afterStateUpdated(function (Get $get, Set $set) {
-                            $set('subtotal', floatval($get('jumlah')) * floatval($get('harga_beli')));
+                            $harga = (float) str_replace('.', '', $get('harga_beli') ?? '');
+                            $set('subtotal', floatval($get('jumlah')) * $harga);
                         }),
-                    TextInput::make('harga_beli')->numeric()->prefix('Rp')->required()
+                    TextInput::make('harga_beli')
+                        ->prefix('Rp')
+                        ->required()
+                        ->placeholder('Contoh: 50.000')
+                        ->dehydrateStateUsing(fn ($state) => (float) str_replace('.', '', $state ?? ''))
+                        ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 0, ',', '.') : '')
                         ->live(onBlur: true)
-                        ->afterStateUpdated(function (Get $get, Set $set) {
-                            $set('subtotal', floatval($get('jumlah')) * floatval($get('harga_beli')));
+                        ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            $harga = (float) str_replace('.', '', $state ?? '');
+                            $set('harga_beli', $harga > 0 ? number_format($harga, 0, ',', '.') : '');
+                            $subtotal = floatval($get('jumlah')) * $harga;
+                            $set('subtotal', $subtotal);
                         }),
-                    TextInput::make('subtotal')->numeric()->prefix('Rp')->readOnly(),
+                    TextInput::make('subtotal')->prefix('Rp')->readOnly()
+                        ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 0, ',', '.') : ''),
                 ])->columns(4)
                 ->label('Detail Pembelian')
                 ->addActionLabel('Tambah Bahan Baku'),
@@ -80,7 +90,7 @@ class PembelianResource extends Resource
                 ->label('Total Pembelian')
                 ->content(function (Get $get) {
                     $items = $get('detailPembelian') ?? [];
-                    $total = collect($items)->sum(fn($i) => floatval($i['subtotal'] ?? 0));
+                    $total = collect($items)->sum(fn($i) => (float)($i['subtotal'] ?? 0));
                     return 'Rp ' . number_format($total, 0, ',', '.');
                 })->live()->columnSpanFull(),
         ]);
@@ -92,7 +102,8 @@ class PembelianResource extends Resource
             TextColumn::make('id')->sortable(),
             TextColumn::make('supplier.nama')->label('Supplier')->searchable(),
             TextColumn::make('tanggal')->date('d/m/Y')->sortable(),
-            TextColumn::make('total')->money('IDR'),
+            TextColumn::make('total')
+                ->formatStateUsing(fn ($state) => 'Rp ' . number_format((float)$state, 0, ',', '.')),
             TextColumn::make('status')
                 ->label('Status')
                 ->badge()

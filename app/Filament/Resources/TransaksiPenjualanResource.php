@@ -51,8 +51,9 @@ class TransaksiPenjualanResource extends Resource
                         ->afterStateUpdated(function ($state, Set $set, Get $get) {
                             $produk = Produk::find($state);
                             if ($produk) {
-                                $set('harga_jual', $produk->harga);
-                                $set('subtotal', $produk->harga * floatval($get('jumlah') ?: 1));
+                                $set('harga_jual', number_format($produk->harga, 0, ',', '.'));
+                                $jumlah = floatval($get('jumlah') ?: 1);
+                                $set('subtotal', number_format($produk->harga * $jumlah, 0, ',', '.'));
                             }
                         }),
                     TextInput::make('jumlah')->numeric()->required()->default(1)
@@ -69,10 +70,15 @@ class TransaksiPenjualanResource extends Resource
                             },
                         ])
                         ->afterStateUpdated(function (Get $get, Set $set) {
-                            $set('subtotal', floatval($get('jumlah')) * floatval($get('harga_jual')));
+                            $harga = (float) str_replace('.', '', $get('harga_jual') ?? '');
+                            $set('subtotal', number_format(floatval($get('jumlah')) * $harga, 0, ',', '.'));
                         }),
-                    TextInput::make('harga_jual')->numeric()->prefix('Rp')->readOnly(),
-                    TextInput::make('subtotal')->numeric()->prefix('Rp')->readOnly(),
+                    TextInput::make('harga_jual')->prefix('Rp')->readOnly()
+                        ->dehydrateStateUsing(fn ($state) => (float) str_replace('.', '', $state ?? ''))
+                        ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 0, ',', '.') : ''),
+                    TextInput::make('subtotal')->prefix('Rp')->readOnly()
+                        ->dehydrateStateUsing(fn ($state) => (float) str_replace('.', '', $state ?? ''))
+                        ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 0, ',', '.') : ''),
                 ])->columns(4)->label('Item Pesanan')->addActionLabel('+ Tambah Item')->columnSpanFull()
                 ->grid(1)
                 ->itemLabel(fn (array $state): ?string => 
@@ -85,7 +91,7 @@ class TransaksiPenjualanResource extends Resource
                 ->label('Total Pembayaran')
                 ->content(function (Get $get) {
                     $items = $get('detailPenjualan') ?? [];
-                    $total = collect($items)->sum(fn($i) => floatval($i['subtotal'] ?? 0));
+                    $total = collect($items)->sum(fn($i) => (float) str_replace('.', '', $i['subtotal'] ?? '0'));
                     return 'Rp ' . number_format($total, 0, ',', '.');
                 })->live()->columnSpanFull(),
         ])->columns(2);
@@ -123,11 +129,21 @@ class TransaksiPenjualanResource extends Resource
                 ->form([
                     TextInput::make('bayar')
                         ->label('Nominal Bayar')
-                        ->numeric()->prefix('Rp')->required()
-                        ->hint('Masukkan nominal tanpa titik. Contoh: 50000'),
+                        ->prefix('Rp')
+                        ->required()
+                        ->placeholder('Contoh: 200.000')
+                        ->hint('Gunakan titik sebagai pemisah ribuan. Contoh: 200.000')
+                        ->rule('required')
+                        ->dehydrateStateUsing(fn ($state) => (float) str_replace('.', '', $state))
+                        ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 0, ',', '.') : '')
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function ($state, Set $set) {
+                            $clean = (float) str_replace('.', '', $state ?? '');
+                            $set('bayar', $clean > 0 ? number_format($clean, 0, ',', '.') : '');
+                        }),
                 ])
                 ->action(function ($record, array $data) {
-                    $bayar = floatval($data['bayar']);
+                    $bayar = (float) str_replace('.', '', $data['bayar']);
                     if ($bayar < $record->total) {
                         \Filament\Notifications\Notification::make()
                             ->title('Uang Kurang!')
